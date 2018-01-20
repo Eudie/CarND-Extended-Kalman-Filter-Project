@@ -1,3 +1,7 @@
+#define _USE_MATH_DEFINES
+
+#include <cmath>
+
 #include "kalman_filter.h"
 #include <iostream>
 
@@ -56,5 +60,35 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   TODO:
     * update the state by using Extended Kalman Filter equations
   */
+
+  double rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
+  double theta = atan2(x_(1) , x_(0));
+  double rho_dot = (x_(0)*x_(2) + x_(1)*x_(3)) / rho;
+  VectorXd h = VectorXd(3); // h(x_)
+  h << rho, theta, rho_dot;
+
+  long x_size = x_.size();
+	MatrixXd I = MatrixXd::Identity(x_size, x_size);
+
+
+	MatrixXd S = H_*P_*H_.transpose() + R_;
+	MatrixXd K = P_*H_.transpose()*S.inverse();
+
+  VectorXd y = z-h;
+
+
+  if(y[1]>M_PI){
+    // cout << y[1] <<endl;
+    y[1]=y[1] - 2*M_PI;
+    // cout << y[1] <<endl;
+  }else if(y[1]< -1*M_PI){
+    // cout << y[1] <<endl;
+    y[1]=y[1] + 2*M_PI;
+    // cout << y[1] <<endl;
+  }
+	x_ = x_ + K*(y);
+
+	P_ = (I-K*H_)*P_;
+
 
 }
